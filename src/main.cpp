@@ -21,11 +21,11 @@ BLECharacteristic *pPWD_Characteristic;
 
 void WiFiEvent(WiFiEvent_t event)
 {
-    Serial.printf("[WiFi-event] event: %d\n", event);
     wifi_connecting = false;
 
     switch(event) {
     case SYSTEM_EVENT_STA_GOT_IP:
+        Serial.println("");
         Serial.println("WiFi connected");
         Serial.println("IP address: ");
         Serial.println(WiFi.localIP());
@@ -77,11 +77,7 @@ void loop() {
   // put your main code here, to run repeatedly:
   delay(1000);
   if(!wifi_connected && !wifi_connecting) {
-    Serial.printf(
-      "%s %s \n", 
-      pSSID_Characteristic->getValue().c_str(), 
-      pPWD_Characteristic->getValue().c_str()
-    );
+    Serial.print(".");
     WiFi.begin( 
       pSSID_Characteristic->getValue().c_str(), 
       pPWD_Characteristic->getValue().c_str()
