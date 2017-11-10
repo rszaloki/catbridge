@@ -4,10 +4,6 @@
 #include <BLEServer.h>
 #include <WiFi.h>
 
-
-const char* ssid     = "your-ssid";
-const char* password = "your-password";
-
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
 
@@ -20,7 +16,8 @@ const char* password = "your-password";
 bool wifi_connected = false;
 bool wifi_connecting = false;
 
-
+BLECharacteristic *pSSID_Characteristic;
+BLECharacteristic *pPWD_Characteristic;
 
 void WiFiEvent(WiFiEvent_t event)
 {
@@ -35,28 +32,11 @@ void WiFiEvent(WiFiEvent_t event)
         wifi_connected = true;
         break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
-        Serial.println("WiFi lost connection");
+        if(wifi_connected) Serial.println("WiFi lost connection");
         wifi_connected = false;
         break;
     }
 }
-
-
-class SetSSID: public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic *pCharacteristic) {
-      std::string value = pCharacteristic->getValue();
-
-      strcpy(ssid, value.c_str());
-    }
-};
-
-class SetPassword: public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic *pCharacteristic) {
-      std::string value = pCharacteristic->getValue();
-
-      strcpy(password, value.c_str());
-    }
-};
 
 void setup() {
   Serial.begin(115200);
@@ -70,38 +50,42 @@ void setup() {
 
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
-  BLECharacteristic *pSSID_Characteristic = pService->createCharacteristic(
+  pSSID_Characteristic = pService->createCharacteristic(
                                          SSID_CHARACTERISTIC_UUID,
                                          BLECharacteristic::PROPERTY_READ |
                                          BLECharacteristic::PROPERTY_WRITE
                                        );
 
-  pSSID_Characteristic->setCallbacks(new SetSSID());
-
-  BLECharacteristic *pPWD_Characteristic = pService->createCharacteristic(
+  pPWD_Characteristic = pService->createCharacteristic(
                                          PWD_CHARACTERISTIC_UUID,
                                          BLECharacteristic::PROPERTY_READ |
                                          BLECharacteristic::PROPERTY_WRITE
                                        );
 
-  pPWD_Characteristic->setCallbacks(new SetPassword());
+  pSSID_Characteristic->setValue("ssid");
+  pPWD_Characteristic->setValue("password");
 
   pService->start();
 
   BLEAdvertising *pAdvertising = pServer->getAdvertising();
   pAdvertising->start();
 
-
   WiFi.onEvent(WiFiEvent);
-
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   delay(1000);
   if(!wifi_connected && !wifi_connecting) {
-    Serial.printf("%s %s \n", ssid, password);
-    WiFi.begin(ssid, password);
+    Serial.printf(
+      "%s %s \n", 
+      pSSID_Characteristic->getValue().c_str(), 
+      pPWD_Characteristic->getValue().c_str()
+    );
+    WiFi.begin( 
+      pSSID_Characteristic->getValue().c_str(), 
+      pPWD_Characteristic->getValue().c_str()
+    );
     wifi_connecting = true;
   }
 }
