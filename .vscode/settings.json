@@ -1,0 +1,5 @@
+{
+    "terminal.integrated.env.osx": {
+        "PATH": "/Users/robi/.platformio/penv/bin:/Users/robi/.nvm/versions/node/v7.8.0/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/robi/esp/xtensa-esp32-elf/bin:/Users/robi/.mos/bin:/Users/robi/Library/Python/3.6/bin/"
+    }
+}

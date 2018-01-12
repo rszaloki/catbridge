@@ -19,42 +19,15 @@
 bool wifi_connected = false;
 bool wifi_connecting = false;
 
+int ledPin = 16;
+
 BLECharacteristic *pSSID_Characteristic;
 BLECharacteristic *pPWD_Characteristic;
 
-void readFile(fs::FS &fs, const char * path){
-    Serial.printf("Reading file: %s\n", path);
-
-    File file = fs.open(path);
-    if(!file || file.isDirectory()){
-        Serial.println("Failed to open file for reading");
-        return;
-    }
-
-    Serial.print("Read from file: ");
-    while(file.available()){
-        Serial.write(file.read());
-    }
-}
-
-void writeFile(fs::FS &fs, const char * path, const char * message){
-    Serial.printf("Writing file: %s\n", path);
-
-    File file = fs.open(path, FILE_WRITE);
-    if(!file){
-        Serial.println("Failed to open file for writing");
-        return;
-    }
-    if(file.print(message)){
-        Serial.println("File written");
-    } else {
-        Serial.println("Write failed");
-    }
-}
-
 void WiFiEvent(WiFiEvent_t event)
 {
-    wifi_connecting = false;
+    Serial.print(".");
+    digitalWrite(ledPin,LOW);
 
     switch(event) {
     case SYSTEM_EVENT_STA_GOT_IP:
@@ -62,11 +35,13 @@ void WiFiEvent(WiFiEvent_t event)
         Serial.println("WiFi connected");
         Serial.println("IP address: ");
         Serial.println(WiFi.localIP());
+        wifi_connecting = false;
         wifi_connected = true;
-        writeFile(SPIFFS, WIFI_FILE, pSSID_Characteristic->getValue().c_str());
+        digitalWrite(ledPin,HIGH);
         break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
         if(wifi_connected) Serial.println("WiFi lost connection");
+        wifi_connecting = false;
         wifi_connected = false;
         break;
     }
@@ -78,6 +53,8 @@ void setup() {
   Serial.printf("BLE device %s \n", BLE_NAME);
   Serial.printf("SSID characteristic %s \n", SSID_CHARACTERISTIC_UUID);
   Serial.printf("PWD characteristic %s \n", PWD_CHARACTERISTIC_UUID);
+
+  pinMode(ledPin, OUTPUT);
 
   BLEDevice::init(BLE_NAME);
   BLEServer *pServer = BLEDevice::createServer();
@@ -95,16 +72,8 @@ void setup() {
                                          BLECharacteristic::PROPERTY_READ |
                                          BLECharacteristic::PROPERTY_WRITE
                                        );
-
-  if(!SPIFFS.begin()) {
-    Serial.println("SPIFFS Mount Failed");
-    pSSID_Characteristic->setValue("ssid");
-    pPWD_Characteristic->setValue("password");
-  } else {
-    readFile(SPIFFS, WIFI_FILE);
-    pSSID_Characteristic->setValue("ssid");
-    pPWD_Characteristic->setValue("password");
-  }
+  pSSID_Characteristic->setValue("ssid");
+  pPWD_Characteristic->setValue("password");
 
   pService->start();
 
@@ -115,13 +84,16 @@ void setup() {
 }
 
 void loop() {
-  delay(1000);
   if(!wifi_connected && !wifi_connecting) {
-    Serial.print(".");
-    WiFi.begin( 
-      pSSID_Characteristic->getValue().c_str(), 
-      pPWD_Characteristic->getValue().c_str()
-    );
+    digitalWrite(ledPin,HIGH);
+    Serial.println(pSSID_Characteristic->getValue().c_str());
+    Serial.println(pPWD_Characteristic->getValue().c_str());
+    Serial.println(WiFi.isConnected());
+    WiFi.disconnect(true);
+    WiFi.begin(
+      pSSID_Characteristic->getValue().c_str(),
+      pPWD_Characteristic->getValue().c_str());
     wifi_connecting = true;
   }
+  delay(1000);
 }

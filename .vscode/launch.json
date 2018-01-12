@@ -6,7 +6,7 @@
             "request": "launch",
             "cwd": "${workspaceRoot}",
             "name": "PlatformIO Debugger",
-            "target": "/Users/robi/src/catbridge/.pioenvs/esp32thing/firmware.elf",
+            "target": "/Users/robi/Documents/PlatformIO/Projects/171110-172520-esp32thing/.pioenvs/esp32thing/firmware.elf",
             "gdbpath": "/Users/robi/.platformio/penv/bin/piodebuggdb",
             "autorun": [ "source .pioinit" ]
         }
